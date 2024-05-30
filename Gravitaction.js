@@ -7,7 +7,7 @@ canvas.height = window.innerHeight;
 const player = {
     width: 20,
     height: 30,
-    x: 100,
+    x: 180,
     y: canvas.height / 2,
     speed: 5.5,
     velocityY: 0,
@@ -18,16 +18,30 @@ const player = {
 const gravity = 0.4;
 const groundHeight = 50;
 
+const island = {
+    x: 150,
+    y: canvas.height - groundHeight - 25,
+    width: 80,
+    height: 25
+};
+
 const keys = {
     left: false,
     right: false,
     up: false
 };
 
+let gameOver = false;
+
 window.addEventListener('keydown', function(e) {
     if (e.code === 'KeyA') keys.left = true;
     if (e.code === 'KeyD') keys.right = true;
     if (e.code === 'KeyW') keys.up = true;
+
+    // Allow resetting the game when game over
+    if (e.code === 'Space' && gameOver) {
+        resetGame();
+    }
 });
 
 window.addEventListener('keyup', function(e) {
@@ -37,6 +51,8 @@ window.addEventListener('keyup', function(e) {
 });
 
 function update() {
+    if (gameOver) return;
+
     if (keys.left) player.x -= player.speed;
     if (keys.right) player.x += player.speed;
     if (keys.up) {
@@ -52,6 +68,7 @@ function update() {
         player.y = canvas.height - groundHeight - player.height;
         player.velocityY = 0;
         player.grounded = true;
+        gameOver = true;
     } else {
         player.grounded = false;
     }
@@ -60,6 +77,17 @@ function update() {
     if (player.y < 0) {
         player.y = 0;
         player.velocityY = 0;
+    }
+
+    // Collision detection with the island
+    if (player.x < island.x + island.width &&
+        player.x + player.width > island.x &&
+        player.y + player.height > island.y &&
+        player.y + player.height < island.y + island.height) {
+        // Player is on top of the island
+        player.y = island.y - player.height;
+        player.velocityY = 0;
+        player.grounded = true;
     }
 }
 
@@ -70,13 +98,31 @@ function draw() {
     context.fillStyle = 'darkgrey';
     context.fillRect(player.x, player.y, player.width, player.height);
 
-    // Island
+    // Draw island
     context.fillStyle = 'green';
-    context.fillRect(150,550,80,25);
+    context.fillRect(island.x, island.y, island.width, island.height);
 
     // Draw ground
     context.fillStyle = 'red';
     context.fillRect(0, canvas.height - groundHeight, canvas.width, groundHeight);
+
+    if (gameOver) {
+        // Display Game Over message
+        context.fillStyle = 'white';
+        context.font = '48px serif';
+        context.textAlign = 'center';
+        context.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 50);
+        context.font = '24px serif';
+        context.fillText('Press Space to Restart', canvas.width / 2, canvas.height / 2 + 20);
+    }
+}
+
+function resetGame() {
+    player.x = 100;
+    player.y = canvas.height / 2;
+    player.velocityY = 0;
+    player.grounded = false;
+    gameOver = false;
 }
 
 function gameLoop() {
@@ -86,4 +132,3 @@ function gameLoop() {
 }
 
 gameLoop();
-
