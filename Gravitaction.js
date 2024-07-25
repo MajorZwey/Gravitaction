@@ -44,6 +44,7 @@ let gameOver = false;
 let hoverTimeout = null;
 let startTime = null;
 let elapsedTime = 0;
+let inTutorial = true;
 
 function createStone() {
     const yPosition = Math.random() * (canvas.height - stoneHeight);
@@ -102,7 +103,7 @@ window.addEventListener('keyup', function(e) {
 });
 
 function update() {
-    if (gameOver) return;
+    if (inTutorial || gameOver) return;
 
     if (keys.left) player.x -= player.speed;
     if (keys.right) player.x += player.speed;
@@ -165,12 +166,16 @@ function update() {
 function draw() {
     context.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw player with image
-    if (player.image.complete) { // Ensure the image is loaded
-        context.drawImage(player.image, player.x, player.y, player.width, player.height);
+    if (inTutorial) {
+        drawTutorial();
+        return;
     }
-    else {
-        // Fallback to a rectangle if image is not loaded
+
+    // Draw player with image
+    if (player.image.complete && player.image.naturalHeight !== 0) { // Ensure the image is loaded and valid
+        context.drawImage(player.image, player.x, player.y, player.width, player.height);
+    } else {
+        // Fallback to a rectangle if image is not loaded or failed to load
         context.fillStyle = 'green';
         context.fillRect(player.x, player.y, player.width, player.height);
     }
@@ -208,6 +213,45 @@ function draw() {
     }
 }
 
+function drawTutorial() {
+    context.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    context.fillStyle = 'white';
+    context.font = '48px Arial';
+    context.textAlign = 'center';
+    context.fillText('GRAVITACTION', canvas.width / 2, canvas.height / 2 - 200);
+
+    context.font = '24px Arial';
+    context.fillText('Player 1 (Key Player):', canvas.width / 2, canvas.height / 2 - 120);
+    context.fillText('Use W, A, S and D keys to fly', canvas.width / 2, canvas.height / 2 - 80);
+    context.fillText('Dodge red stones and avoid the mouse for more than 150 milliseconds', canvas.width / 2, canvas.height / 2 - 40);
+    context.fillText('You win if you survive for at least 30 seconds', canvas.width / 2, canvas.height / 2);
+
+    context.fillText('Player 2 (Mouse Player):', canvas.width / 2, canvas.height / 2 + 40);
+    context.fillText('Move your mouse to hold it on the Key player for more than 150 milliseconds', canvas.width / 2, canvas.height / 2 + 80);
+    context.fillText('You win if Key player dies within 30 seconds', canvas.width / 2, canvas.height / 2 + 120);
+
+    // Draw "Start Game" button
+    context.fillStyle = 'green';
+    context.fillRect(canvas.width / 2 - 100, canvas.height / 2 + 160, 200, 50);
+    context.fillStyle = 'white';
+    context.fillText('Start Game', canvas.width / 2, canvas.height / 2 + 195);
+}
+
+canvas.addEventListener('click', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    if (inTutorial &&
+        mouseX >= canvas.width / 2 - 100 && mouseX <= canvas.width / 2 + 100 &&
+        mouseY >= canvas.height / 2 + 160 && mouseY <= canvas.height / 2 + 210) {
+        inTutorial = false;
+        startTime = performance.now(); // Initialize start time when game starts
+    }
+});
+
 function resetGame() {
     player.x = 120;
     player.y = canvas.height / 2;
@@ -229,6 +273,8 @@ setInterval(createStone, 2000); // Create a new stone every 2 seconds
 
 // Mouse hover detection
 canvas.addEventListener('mousemove', function(e) {
+    if (inTutorial) return;
+
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
@@ -238,7 +284,7 @@ canvas.addEventListener('mousemove', function(e) {
         if (!hoverTimeout) {
             hoverTimeout = setTimeout(() => {
                 gameOver = true;
-            }, 1000);
+            }, 150);
         }
     } else {
         if (hoverTimeout) {
@@ -248,5 +294,5 @@ canvas.addEventListener('mousemove', function(e) {
     }
 });
 
-startTime = performance.now(); // Initialize start time when game starts
 gameLoop();
+
