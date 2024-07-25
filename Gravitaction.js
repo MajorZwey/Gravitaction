@@ -8,8 +8,8 @@ const playerImage = new Image();
 playerImage.src = 'player.png'; // Set the path to your player image
 
 const player = {
-    width: 35,
-    height: 35,
+    width: 55,
+    height: 55,
     x: 150,
     y: canvas.height / 2,
     speed: 5.5,
@@ -42,6 +42,8 @@ const stoneSpeed = 26;
 
 let gameOver = false;
 let hoverTimeout = null;
+let startTime = null;
+let elapsedTime = 0;
 
 function createStone() {
     const yPosition = Math.random() * (canvas.height - stoneHeight);
@@ -153,6 +155,11 @@ function update() {
 
     updateStones();
     checkCollisions();
+
+    // Update elapsed time
+    if (startTime !== null) {
+        elapsedTime = performance.now() - startTime;
+    }
 }
 
 function draw() {
@@ -179,6 +186,14 @@ function draw() {
     context.fillStyle = 'red';
     context.fillRect(0, canvas.height - groundHeight, canvas.width, groundHeight);
 
+    // Draw timer
+    const seconds = Math.floor(elapsedTime / 1000);
+    const milliseconds = Math.floor(elapsedTime % 1000);
+    context.fillStyle = 'white';
+    context.font = '24px Arial';
+    context.textAlign = 'right';
+    context.fillText(`Time: ${seconds}s ${milliseconds}ms`, canvas.width - 10, 30);
+
     if (gameOver) {
         // Display Game Over message
         context.fillStyle = 'yellow';
@@ -187,6 +202,9 @@ function draw() {
         context.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 50);
         context.font = '24px serif';
         context.fillText('Press Space to Restart', canvas.width / 2, canvas.height / 2 + 20);
+
+        // Display final time under game over title
+        context.fillText(`Final Time: ${seconds}s ${milliseconds}ms`, canvas.width / 2, canvas.height / 2 + 60);
     }
 }
 
@@ -197,6 +215,8 @@ function resetGame() {
     player.grounded = false;
     stones.length = 0;
     gameOver = false;
+    startTime = performance.now(); // Reset start time
+    elapsedTime = 0;
 }
 
 function gameLoop() {
@@ -218,7 +238,7 @@ canvas.addEventListener('mousemove', function(e) {
         if (!hoverTimeout) {
             hoverTimeout = setTimeout(() => {
                 gameOver = true;
-            }, 150);
+            }, 1000);
         }
     } else {
         if (hoverTimeout) {
@@ -228,4 +248,5 @@ canvas.addEventListener('mousemove', function(e) {
     }
 });
 
+startTime = performance.now(); // Initialize start time when game starts
 gameLoop();
