@@ -4,15 +4,19 @@ const context = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
+const playerImage = new Image();
+playerImage.src = 'player.png'; // Set the path to your player image
+
 const player = {
-    width: 20,
-    height: 30,
-    x: 180,
+    width: 35,
+    height: 35,
+    x: 150,
     y: canvas.height / 2,
     speed: 5.5,
     velocityY: 0,
-    flyStrength: -10,
-    grounded: false
+    flyStrength: -5,
+    grounded: false,
+    image: playerImage
 };
 
 const gravity = 0.4;
@@ -22,7 +26,7 @@ const island = {
     x: 150,
     y: canvas.height - groundHeight - 25,
     width: 80,
-    height: 25
+    height: 100
 };
 
 const keys = {
@@ -31,7 +35,51 @@ const keys = {
     up: false
 };
 
+const stones = [];
+const stoneWidth = 100;
+const stoneHeight = 100;
+const stoneSpeed = 26;
+
 let gameOver = false;
+
+function createStone() {
+    const yPosition = Math.random() * (canvas.height - stoneHeight);
+    stones.push({
+        x: canvas.width,
+        y: yPosition,
+        width: stoneWidth,
+        height: stoneHeight,
+        speed: stoneSpeed
+    });
+}
+
+function updateStones() {
+    for (let i = stones.length - 1; i >= 0; i--) {
+        stones[i].x -= stones[i].speed;
+        if (stones[i].x + stones[i].width < 0) {
+            stones.splice(i, 1);
+        }
+    }
+}
+
+function drawStones() {
+    context.fillStyle = 'red';
+    for (const stone of stones) {
+        context.fillRect(stone.x, stone.y, stone.width, stone.height);
+    }
+}
+
+function checkCollisions() {
+    for (const stone of stones) {
+        if (player.x < stone.x + stone.width &&
+            player.x + player.width > stone.x &&
+            player.y < stone.y + stone.height &&
+            player.y + player.height > stone.y) {
+            gameOver = true;
+            return;
+        }
+    }
+}
 
 window.addEventListener('keydown', function(e) {
     if (e.code === 'KeyA') keys.left = true;
@@ -79,6 +127,18 @@ function update() {
         player.velocityY = 0;
     }
 
+    // Prevent player from flying off the left side of the screen
+    if (player.x < 0) {
+        player.x = 0;
+        player.velocityX = 0;
+    }
+
+    // Prevent player from flying off the right side of the screen
+    if (player.x > canvas.width - player.width) {
+        player.x = canvas.width - player.width;
+        player.velocityX = 0;
+    }
+
     // Collision detection with the island
     if (player.x < island.x + island.width &&
         player.x + player.width > island.x &&
@@ -89,17 +149,29 @@ function update() {
         player.velocityY = 0;
         player.grounded = true;
     }
+
+    updateStones();
+    checkCollisions();
 }
 
 function draw() {
     context.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw player
-    context.fillStyle = 'darkgrey';
-    context.fillRect(player.x, player.y, player.width, player.height);
+    // Draw player with image
+    //if (player.image.complete) { // Ensure the image is loaded
+    //    context.drawImage(player.image, player.x, player.y, player.width, player.height);
+    //} 
+    //else {
+        // Fallback to a rectangle if image is not loaded
+        context.fillStyle = 'green';
+        context.fillRect(player.x, player.y, player.width, player.height);
+    //}
+
+    // Draw stones
+    drawStones();
 
     // Draw island
-    context.fillStyle = 'green';
+    context.fillStyle = 'blue';
     context.fillRect(island.x, island.y, island.width, island.height);
 
     // Draw ground
@@ -108,7 +180,7 @@ function draw() {
 
     if (gameOver) {
         // Display Game Over message
-        context.fillStyle = 'white';
+        context.fillStyle = 'yellow';
         context.font = '48px serif';
         context.textAlign = 'center';
         context.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 50);
@@ -118,10 +190,11 @@ function draw() {
 }
 
 function resetGame() {
-    player.x = 100;
+    player.x = 120;
     player.y = canvas.height / 2;
     player.velocityY = 0;
     player.grounded = false;
+    stones.length = 0;
     gameOver = false;
 }
 
@@ -130,5 +203,7 @@ function gameLoop() {
     draw();
     requestAnimationFrame(gameLoop);
 }
+
+setInterval(createStone, 2000); // Create a new stone every 2 seconds
 
 gameLoop();
