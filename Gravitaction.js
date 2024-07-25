@@ -166,14 +166,14 @@ function draw() {
     context.clearRect(0, 0, canvas.width, canvas.height);
 
     // Draw player with image
-    //if (player.image.complete) { // Ensure the image is loaded
-    //    context.drawImage(player.image, player.x, player.y, player.width, player.height);
-    //} 
-    //else {
+    if (player.image.complete) { // Ensure the image is loaded
+        context.drawImage(player.image, player.x, player.y, player.width, player.height);
+    }
+    else {
         // Fallback to a rectangle if image is not loaded
         context.fillStyle = 'green';
         context.fillRect(player.x, player.y, player.width, player.height);
-    //}
+    }
 
     // Draw stones
     drawStones();
