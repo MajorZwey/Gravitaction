@@ -41,6 +41,7 @@ const stoneHeight = 100;
 const stoneSpeed = 26;
 
 let gameOver = false;
+let hoverTimeout = null;
 
 function createStone() {
     const yPosition = Math.random() * (canvas.height - stoneHeight);
@@ -205,5 +206,26 @@ function gameLoop() {
 }
 
 setInterval(createStone, 2000); // Create a new stone every 2 seconds
+
+// Mouse hover detection
+canvas.addEventListener('mousemove', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    if (mouseX >= player.x && mouseX <= player.x + player.width &&
+        mouseY >= player.y && mouseY <= player.y + player.height) {
+        if (!hoverTimeout) {
+            hoverTimeout = setTimeout(() => {
+                gameOver = true;
+            }, 150);
+        }
+    } else {
+        if (hoverTimeout) {
+            clearTimeout(hoverTimeout);
+            hoverTimeout = null;
+        }
+    }
+});
 
 gameLoop();
